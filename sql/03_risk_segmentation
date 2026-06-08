@@ -1,1 +1,130 @@
+## Customer segement revenue
 
+SELECT
+    tenure_segment,
+
+    ROUND(SUM(MonthlyCharges),2) AS monthly_revenue,
+
+    ROUND(
+        SUM(
+            CASE WHEN Churn
+            THEN MonthlyCharges
+            ELSE 0
+            END
+        ),
+        2
+    ) AS revenue_lost
+
+FROM `charming-bolt-464216-v0.saas_churn_analysis.customer_churn_enriched`
+GROUP BY tenure_segment
+ORDER BY revenue_lost DESC;
+
+## customer segment highest-risk
+
+SELECT
+    Contract,
+    tenure_segment,
+    
+    COUNT(*) AS customers,
+
+    ROUND(
+        100 *
+        SUM(CASE WHEN Churn THEN 1 ELSE 0 END)
+        / COUNT(*),
+        2
+    ) AS churn_rate,
+
+    ROUND(
+        SUM(
+            CASE WHEN Churn
+            THEN MonthlyCharges
+            ELSE 0
+            END
+        ),
+        2
+    ) AS revenue_lost
+
+FROM `charming-bolt-464216-v0.saas_churn_analysis.customer_churn_enriched`
+GROUP BY Contract, tenure_segment
+ORDER BY revenue_lost DESC;
+
+## riisk scoring model
+SELECT
+    customerID,
+    Contract,
+    tenure_segment,
+    TechSupport,
+    MonthlyCharges,
+
+    CASE
+        WHEN Contract = 'Month-to-month'
+            AND tenure_segment = 'New'
+            AND TechSupport = 'No'
+        THEN 'High Risk'
+
+        WHEN Contract = 'Month-to-month'
+            AND tenure_segment = 'New'
+        THEN 'Medium Risk'
+
+        ELSE 'Low Risk'
+    END AS risk_segment
+from `charming-bolt-464216-v0.saas_churn_analysis.customer_churn_enriched`;
+
+# Risk model aggregate
+WITH risk_model AS (
+
+SELECT
+    customerID,
+    MonthlyCharges,
+    Churn,
+
+    CASE
+        
+        WHEN Contract = 'Month-to-month'
+             AND tenure_segment = 'New'
+             AND TechSupport = 'No'
+        THEN 'Very High Risk'
+
+        WHEN Contract = 'Month-to-month'
+             AND tenure_segment = 'New'
+        THEN 'High Risk'
+        WHEN Contract = 'Month-to-month'
+             or TechSupport = 'No'
+        THEN 'Medium Risk'
+        ELSE 'Low Risk'
+    END AS risk_segment
+
+FROM `charming-bolt-464216-v0.saas_churn_analysis.customer_churn_enriched`
+
+)
+
+SELECT
+    risk_segment,
+
+    COUNT(*) AS customers,
+
+    ROUND(SUM(MonthlyCharges),2) AS monthly_revenue,
+
+    ROUND(
+        SUM(
+            CASE WHEN Churn
+            THEN MonthlyCharges
+            ELSE 0
+            END
+        ),
+        2
+    ) AS revenue_lost,
+
+    ROUND(
+        100 *
+        SUM(
+            CASE WHEN Churn
+            THEN 1 ELSE 0
+            END
+        ) / COUNT(*),
+        2
+    ) AS churn_rate
+
+FROM risk_model
+GROUP BY risk_segment
+ORDER BY revenue_lost DESC;

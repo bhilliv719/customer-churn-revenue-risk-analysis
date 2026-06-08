@@ -1,1 +1,70 @@
+## Quantify Revenue Loss
+
+SELECT
+    ROUND(SUM(MonthlyCharges),2) AS churned_monthly_revenue,
+    ROUND(SUM(MonthlyCharges)*12,2) AS annualized_revenue_loss
+FROM `charming-bolt-464216-v0.saas_churn_analysis.customer_churn_enriched`
+WHERE churn;
+
+## Churn by Contract Type
+SELECT
+    Contract,
+    COUNT(*) AS customers,
+
+    SUM(
+        CASE WHEN Churn THEN 1 ELSE 0 END
+    ) AS churned_customers,
+
+    ROUND(
+        100 *
+        SUM(
+            CASE WHEN Churn THEN 1 ELSE 0
+            END
+        ) / COUNT(*),
+        2
+    ) AS churn_rate
+
+FROM `charming-bolt-464216-v0.saas_churn_analysis.customer_churn_enriched`
+GROUP BY Contract
+ORDER BY churn_rate DESC;
+
+## Tech Support
+SELECT
+    TechSupport,
+    COUNT(*) AS customers,
+
+    ROUND(
+        100 *
+        SUM(CASE WHEN Churn THEN 1 ELSE 0 END)
+        / COUNT(*),
+        2
+    ) AS churn_rate
+
+FROM `charming-bolt-464216-v0.saas_churn_analysis.customer_churn_enriched`
+GROUP BY TechSupport;
+
+## Tenure churn rate
+SELECT
+    tenure_segment,
+    COUNT(*) AS customers,
+
+    SUM(
+        CASE WHEN Churn
+        THEN 1 ELSE 0
+        END
+    ) AS churned_customers,
+
+    ROUND(
+        100 *
+        SUM(
+            CASE WHEN churn
+            THEN 1 ELSE 0
+            END
+        ) / COUNT(*),
+        2
+    ) AS churn_rate
+
+FROM `charming-bolt-464216-v0.saas_churn_analysis.customer_churn_enriched`
+GROUP BY tenure_segment
+ORDER BY churn_rate DESC;
 

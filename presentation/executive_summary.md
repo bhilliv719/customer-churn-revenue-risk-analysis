@@ -1,5 +1,4 @@
 ## 📝 Executive Case Study (STAR Method)
-*Perfect for interviews, LinkedIn posts, or portfolio summaries.*
 
 ### 📍 Situation
 A telecommunications company was experiencing elevated customer churn, creating severe recurring revenue loss and limiting long-term market growth.
